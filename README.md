@@ -28,7 +28,7 @@ Você é livre para:
 
 Sob a condição de que qualquer obra derivada também seja distribuída sob a GPLv3 ou posterior, e que o código-fonte seja disponibilizado.
 
-Veja o arquivo `LICENSE` (ou https://www.gnu.org/licenses/gpl-3.0.html) para o texto completo da licença.
+Veja o arquivo [`LICENSE`](LICENSE) ou https://www.gnu.org/licenses/gpl-3.0.html para o texto completo da licença.
 
 ---
 
