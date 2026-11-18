@@ -32,6 +32,11 @@ from chatbot.chatbot import (
     ollama_is_running,
     ollama_list_models,
     OLLAMA_HOST,
+    MUNDOS_NOMES,
+    extrair_mundo_da_pergunta,
+    is_fonte_palestrante,
+    buscar_palestras_por_mundo,
+    format_answer,
 )
 
 import numpy as np
@@ -109,8 +114,8 @@ def rag_answer(question: str) -> str:
     import re as _re
     nomes_encontrados = _re.findall(r"\b[A-ZÁÉÍÓÚÇ][a-záéíóúç]+ [A-ZÁÉÍÓÚÇ][a-záéíóúç]+\b", question)
     if nomes_encontrados:
-        resultados_palestrantes = [r for r in resultados if _is_fonte_palestrante(r["source"])]
-        resultados_outros = [r for r in resultados if not _is_fonte_palestrante(r["source"])]
+        resultados_palestrantes = [r for r in resultados if is_fonte_palestrante(r["source"])]
+        resultados_outros = [r for r in resultados if not is_fonte_palestrante(r["source"])]
         resultados = resultados_palestrantes + resultados_outros
 
     # Se a pergunta é sobre mundos, prioriza mundos.md e index.md
@@ -160,16 +165,16 @@ def rag_answer(question: str) -> str:
     # diretamente nos chunks de palestrantes.md que mencionam esse mundo.
     listagem_palestras = False
     if any(p in question.lower() for p in ["palestra", "palestras", "programação", "programacao"]):
-        mundo = _extrair_mundo_da_pergunta(question)
+        mundo = extrair_mundo_da_pergunta(question)
         if mundo:
-            palestras_mundo = _buscar_palestras_por_mundo(mundo)
+            palestras_mundo = buscar_palestras_por_mundo(mundo, _chunks, _metadados)
             if palestras_mundo:
                 fontes_existentes = {r["chunk"] for r in resultados}
                 novas = [r for r in palestras_mundo if r["chunk"] not in fontes_existentes]
                 resultados = novas + resultados
                 listagem_palestras = True
                 # Na listagem de palestras por mundo, mostra apenas os palestrantes
-                resultados = [r for r in resultados if _is_fonte_palestrante(r["source"])]
+                resultados = [r for r in resultados if is_fonte_palestrante(r["source"])]
 
     contexto = format_context(resultados)
 
@@ -185,138 +190,7 @@ def rag_answer(question: str) -> str:
         print("[DEBUG] Ollama falhou, fazendo fallback para chunks brutos", flush=True)
 
     # Fallback: formata resposta a partir dos chunks (sem modelo externo)
-    return _format_answer(resultados, listagem_palestras=listagem_palestras)
-
-
-# Nomes dos seis mundos do festival (usados para busca direta de palestras por mundo)
-MUNDOS_NOMES = {
-    "ficiencias": "Mundo FICiências",
-    "ficienicias": "Mundo FICiências",
-    "itaipu parquetec": "Mundo Itaipu Parquetec",
-    "itaipu": "Mundo Itaipu Parquetec",
-    "sapiens": "Mundo Sapiens",
-    "summit tour": "Mundo Summit Tour",
-    "summit": "Mundo Summit Tour",
-    "fims": "Mundo FIMS",
-    "rme": "Mundo RME",
-}
-
-
-def _extrair_mundo_da_pergunta(question: str) -> str | None:
-    """Retorna o nome do mundo mencionado na pergunta, se houver."""
-    q = question.lower()
-    for chave, nome in MUNDOS_NOMES.items():
-        if chave in q:
-            return nome
-    return None
-
-
-def _is_fonte_palestrante(fonte: str) -> bool:
-    return fonte == "palestrantes.md" or fonte.startswith("palestrante-perfil")
-
-
-def _buscar_palestras_por_mundo(mundo: str, limit: int = 8) -> list[dict]:
-    """Busca nos chunks de palestrantes.md aqueles que mencionam o mundo dado.
-
-    Retorna resultados no mesmo formato de ``retrieve`` (sem score de similaridade,
-    com score fixo alto para priorizá-los). Isola a seção do palestrante (até o
-    próximo ``### ``) para não mesclar dois palestrantes no mesmo chunk.
-    """
-    import re as _re
-
-    resultados = []
-    for i, chunk in enumerate(_chunks):
-        fonte = _metadados[i]["source"]
-        if not (fonte == "palestrantes.md" or fonte.startswith("palestrante-perfil")):
-            continue
-        texto = chunk.lower()
-        if mundo.lower() not in texto:
-            continue
-        # Mantém apenas chunks que pareçam uma palestra (têm Data/Horário/Local ou bloco/sala)
-        if not any(p.lower() in texto for p in ["data:", "horário:", "local:", "bloco", "espaço", "sala"]):
-            continue
-        # Isola a parte do chunk antes do próximo cabeçalho ### (não mescla palestrantes)
-        partes = _re.split(r"\n(### |## )", chunk, maxsplit=1)
-        bloco = partes[0].strip() if partes else chunk.strip()
-        resultados.append({
-            "score": 1.0,
-            "chunk": bloco,
-            "source": _metadados[i]["source"],
-            "title": _metadados[i]["title"],
-        })
-        if len(resultados) >= limit:
-            break
-    return resultados
-
-
-def _format_answer(resultados: list[dict], listagem_palestras: bool = False) -> str:
-    """Formata uma resposta concisa e bem estruturada a partir dos chunks.
-
-    Quando ``listagem_palestras`` é True, mostra todos os palestrantes relevantes
-    sem parar no primeiro resultado.
-    """
-    import re
-
-    partes = []
-    fontes_vistas = set()
-
-    palestrantes_result = [r for r in resultados if _is_fonte_palestrante(r["source"])]
-    outros_result = [r for r in resultados if not _is_fonte_palestrante(r["source"])]
-
-    # Em listagem de palestras por mundo, não precisamos descrever os mundos
-    mundos_result = [] if listagem_palestras else [r for r in outros_result if r["source"] == "mundos.md"]
-    outros_result = [r for r in outros_result if r["source"] != "mundos.md"]
-
-    # Ordem de prioridade: palestrantes > mundos > faq > outros
-    resultados_ordenados = palestrantes_result + mundos_result + outros_result
-
-    for r in resultados_ordenados:
-        fonte = f"{r['title']} ({r['source']})"
-        if fonte in fontes_vistas:
-            continue
-        fontes_vistas.add(fonte)
-
-        # Limpa o chunk: remove marcações de markdown excessivas e quebras de linha
-        chunk = r["chunk"]
-        # Remove imagens markdown
-        chunk = re.sub(r"!\[.*?\]\(.*?\)", "", chunk)
-        # Remove links markdown, mantendo o texto
-        chunk = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", chunk)
-        # Remove múltiplas quebras de linha
-        chunk = re.sub(r"\n{3,}", "\n", chunk)
-        # Remove múltiplos espaços
-        chunk = re.sub(r"[ \t]+", " ", chunk)
-        chunk = chunk.strip()
-
-        if len(chunk) < 20:
-            continue
-
-        # Para perguntas sobre uma pessoa específica, prioriza o chunk que menciona o nome
-        if _is_fonte_palestrante(r["source"]) and len(chunk) > 500:
-            linhas = chunk.split("\n")
-            linhas_filtradas = []
-            captura = False
-            for linha in linhas:
-                if linha.startswith("### ") or linha.startswith("## "):
-                    if captura:
-                        break
-                    captura = True
-                if captura:
-                    linhas_filtradas.append(linha)
-            if linhas_filtradas:
-                chunk = "\n".join(linhas_filtradas[:15])
-
-        partes.append(f"**{r['title']}**: {chunk[:400]}")
-
-        # Se não é uma listagem de palestras, para na primeira fonte principal
-        if not listagem_palestras and (_is_fonte_palestrante(r["source"]) or r["source"] in ("mundos.md", "faq.md")):
-            break
-
-    if not partes:
-        return "Não encontrei informações relevantes sobre isso nos conteúdos offline do festival."
-
-    texto = "\n\n".join(partes)
-    return clean_response(texto)
+    return format_answer(resultados, listagem_palestras=listagem_palestras)
 
 
 # ---------------------------------------------------------------------------

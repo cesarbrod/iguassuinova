@@ -38,28 +38,52 @@ def read_md_files(content_dir: Path) -> list[dict]:
 
 
 def chunk_text(text: str, size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
-    # Remove linhas de navegação repetidas e imagens para focar no texto útil
+    # Remove imagens e links de redes sociais ruidosos para focar no texto útil
     text = re.sub(r"!\[.*?\]\(.*?\)", "", text)
-    # Quebra por parágrafos primeiro
-    paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
+    # Remove blocos de cards de divulgação / post para instagram
+    text = re.sub(r"## Cards de Divulgação.*?(?=\n# |\n## |\n### |\Z)", "", text, flags=re.DOTALL)
+    text = re.sub(r"### Post para Instagram.*?(?=\n# |\n## |\n### |\Z)", "", text, flags=re.DOTALL)
+    text = re.sub(r"ⓘ Para compartilhar.*?(?=\n# |\n## |\n### |\Z)", "", text, flags=re.DOTALL)
+    text = re.sub(r"Gerando card….*?(?=\n# |\n## |\n### |\Z)", "", text, flags=re.DOTALL)
+    text = re.sub(r"Compartilhar Baixar Imagem Tentar novamente.*?(?=\n# |\n## |\n### |\Z)", "", text, flags=re.DOTALL)
+
+    # Divide em seções por qualquer cabeçalho markdown (#, ##, ###)
+    secoes = re.split(r"(\n#{1,3} [^\n]+)", text)
+    # secoes[0] é o prefixo antes do primeiro cabeçalho
+    unidades = []
+    if secoes[0].strip():
+        unidades.append(secoes[0].strip())
+    for i in range(1, len(secoes), 2):
+        cabecalho = secoes[i]
+        conteudo = secoes[i + 1] if i + 1 < len(secoes) else ""
+        unidades.append((cabecalho + conteudo).strip())
+
     chunks = []
-    current = ""
-    for para in paragraphs:
-        if len(current) + len(para) + 2 <= size:
-            current = (current + "\n\n" + para).strip() if current else para
-        else:
-            if current:
-                chunks.append(current)
-            # Overlap: pega o final do chunk anterior
-            current = para
-        if len(current) > size:
-            # chunk muito longo, parte em pedaços
-            while len(current) > size:
-                chunks.append(current[:size])
-                current = current[size - overlap:]
-    if current.strip():
-        chunks.append(current.strip())
-    return [c for c in chunks if len(c.strip()) > 30]
+    for unidade in unidades:
+        if not unidade.strip():
+            continue
+        # Se a unidade cabe inteira no tamanho, usa como um chunk
+        if len(unidade) <= size:
+            chunks.append(unidade.strip())
+            continue
+        # Caso contrário, divide a unidade por parágrafos
+        paragrafos = [p.strip() for p in unidade.split("\n\n") if p.strip()]
+        current = ""
+        for para in paragrafos:
+            if len(current) + len(para) + 2 <= size:
+                current = (current + "\n\n" + para).strip() if current else para
+            else:
+                if current:
+                    chunks.append(current)
+                current = para
+            if len(current) > size:
+                while len(current) > size:
+                    chunks.append(current[:size])
+                    current = current[size - overlap:]
+        if current.strip():
+            chunks.append(current.strip())
+
+    return [c for c in chunks if len(c.strip()) > 10]
 
 
 def build_index(docs: list[dict]):

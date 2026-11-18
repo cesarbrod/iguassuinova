@@ -107,7 +107,7 @@ MUNDOS_NOMES = {
 }
 
 
-def _extrair_mundo_da_pergunta(question):
+def extrair_mundo_da_pergunta(question):
     """Retorna o nome do mundo mencionado na pergunta, se houver."""
     q = question.lower()
     for chave, nome in MUNDOS_NOMES.items():
@@ -116,40 +116,215 @@ def _extrair_mundo_da_pergunta(question):
     return None
 
 
-def _is_fonte_palestrante(fonte: str) -> bool:
+def is_fonte_palestrante(fonte: str) -> bool:
     return fonte == "palestrantes.md" or fonte.startswith("palestrante-perfil")
 
 
-def _buscar_palestras_por_mundo(mundo, chunks, metadados, limit=8):
+def buscar_palestras_por_mundo(mundo, chunks, metadados, limit=200):
     """Busca nos chunks de palestrantes.md aqueles que mencionam o mundo dado.
 
-    Retorna resultados no mesmo formato de retrieve (score fixo 1.0). Isola a
-    seção do palestrante (ate o proximo ### ) para nao mesclar dois palestrantes
-    no mesmo chunk.
+    Retorna resultados no mesmo formato de retrieve (score fixo 1.0). Para cada
+    atividade encontrada, junta os chunks adjacentes do mesmo arquivo para
+    montar a atividade completa (nome, data, local, tema), sem mesclar dois
+    palestrantes no mesmo resultado.
     """
     import re as _re
 
     resultados = []
+    usados = set()  # índices já consumidos para evitar duplicados
+
     for i, chunk in enumerate(chunks):
-        if not _is_fonte_palestrante(metadados[i]["source"]):
+        if i in usados:
+            continue
+        if not is_fonte_palestrante(metadados[i]["source"]):
             continue
         texto = chunk.lower()
         if mundo.lower() not in texto:
             continue
+        # Só considera chunks que pareçam uma atividade (têm Data/Horário/Local/bloco/sala)
         if not any(p.lower() in texto for p in ["data:", "horário:", "local:", "bloco", "espaço", "sala"]):
             continue
-        # Isola a parte do chunk antes do próximo cabeçalho ### (não mescla palestrantes)
-        partes = _re.split(r"\n(### |## )", chunk, maxsplit=1)
-        bloco = partes[0].strip() if partes else chunk.strip()
+
+        # Monta a atividade completa: pega este chunk e os adjacentes do mesmo arquivo
+        bloco_parte = chunk
+        usados.add(i)
+
+        # Chunk anterior do mesmo arquivo (pode conter nome/tema da atividade)
+        j = i - 1
+        while j >= 0 and metadados[j]["source"] == metadados[i]["source"] and j not in usados:
+            ant = chunks[j].strip()
+            # Para se for um cabeçalho ### ou conteúdo de atividade
+            if ant.startswith("### ") or ant.startswith("## ") or len(ant) < 200:
+                bloco_parte = ant + "\n\n" + bloco_parte
+                usados.add(j)
+                j -= 1
+            else:
+                break
+
+        # Chunks seguintes do mesmo arquivo (tema da atividade começa com ### )
+        j = i + 1
+        while j < len(chunks) and metadados[j]["source"] == metadados[i]["source"] and j not in usados:
+            prox = chunks[j].strip()
+            if prox.startswith("## ") and not prox.startswith("### "):
+                break  # próximo palestrante (## Nome), para aqui
+            bloco_parte = bloco_parte + "\n\n" + prox
+            usados.add(j)
+            j += 1
+
         resultados.append({
             "score": 1.0,
-            "chunk": bloco.strip(),
+            "chunk": bloco_parte.strip(),
             "source": metadados[i]["source"],
             "title": metadados[i]["title"],
         })
         if len(resultados) >= limit:
             break
     return resultados
+
+
+def format_answer(resultados: list[dict], listagem_palestras: bool = False) -> str:
+    """Formata uma resposta concisa e bem estruturada a partir dos chunks.
+
+    Quando ``listagem_palestras`` é True, mostra todos os palestrantes relevantes
+    sem parar no primeiro resultado, com foco em nome, data, local e tema.
+    """
+    import re
+
+    if listagem_palestras:
+        return _formatar_lista_palestras(resultados)
+
+    partes = []
+    fontes_vistas = set()
+
+    palestrantes_result = [r for r in resultados if is_fonte_palestrante(r["source"])]
+    outros_result = [r for r in resultados if not is_fonte_palestrante(r["source"])]
+
+    # Em listagem de palestras por mundo, não precisamos descrever os mundos
+    mundos_result = [] if listagem_palestras else [r for r in outros_result if r["source"] == "mundos.md"]
+    outros_result = [r for r in outros_result if r["source"] != "mundos.md"]
+
+    # Ordem de prioridade: palestrantes > mundos > faq > outros
+    resultados_ordenados = palestrantes_result + mundos_result + outros_result
+
+    for r in resultados_ordenados:
+        fonte = f"{r['title']} ({r['source']})"
+        if fonte in fontes_vistas:
+            continue
+        fontes_vistas.add(fonte)
+
+        # Limpa o chunk: remove marcações de markdown excessivas e quebras de linha
+        chunk = r["chunk"]
+        # Remove imagens markdown
+        chunk = re.sub(r"!\[.*?\]\(.*?\)", "", chunk)
+        # Remove links markdown, mantendo o texto
+        chunk = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", chunk)
+        # Remove múltiplas quebras de linha
+        chunk = re.sub(r"\n{3,}", "\n", chunk)
+        # Remove múltiplos espaços
+        chunk = re.sub(r"[ \t]+", " ", chunk)
+        chunk = chunk.strip()
+
+        if len(chunk) < 20:
+            continue
+
+        # Para perguntas sobre uma pessoa específica, prioriza o chunk que menciona o nome
+        if is_fonte_palestrante(r["source"]) and len(chunk) > 500:
+            linhas = chunk.split("\n")
+            linhas_filtradas = []
+            captura = False
+            for linha in linhas:
+                if linha.startswith("### ") or linha.startswith("## "):
+                    if captura:
+                        break
+                    captura = True
+                if captura:
+                    linhas_filtradas.append(linha)
+            if linhas_filtradas:
+                chunk = "\n".join(linhas_filtradas[:15])
+
+        partes.append(f"**{r['title']}**: {chunk[:800]}")
+
+        # Se não é uma listagem de palestras, para na primeira fonte principal
+        if not listagem_palestras and (is_fonte_palestrante(r["source"]) or r["source"] in ("mundos.md", "faq.md")):
+            break
+
+    if not partes:
+        return "Não encontrei informações relevantes sobre isso nos conteúdos offline do festival."
+
+    texto = "\n\n".join(partes)
+    return clean_response(texto)
+
+
+def _formatar_lista_palestras(resultados: list[dict]) -> str:
+    """Formata uma listagem de palestras por mundo, com nome, data, local e tema."""
+    import re
+
+    linhas = []
+    fontes_vistas = set()
+
+    for r in resultados:
+        fonte = r["source"]
+        if not is_fonte_palestrante(fonte):
+            continue
+        if fonte in fontes_vistas:
+            continue
+        fontes_vistas.add(fonte)
+
+        chunk = r["chunk"]
+        # Limpa marcações
+        chunk = re.sub(r"!\[.*?\]\(.*?\)", "", chunk)
+        chunk = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", chunk)
+        chunk = re.sub(r"\n{3,}", "\n", chunk)
+        chunk = re.sub(r"[ \t]+", " ", chunk)
+        chunk = chunk.strip()
+
+        if len(chunk) < 20:
+            continue
+
+        # Extrai nome do palestrante (primeira linha ## ou ###)
+        nome = r["title"]
+        m_nome = re.search(r"##?\s+(.+)", chunk)
+        if m_nome:
+            candidato = m_nome.group(1).strip()
+            if "possui" not in candidato and len(candidato) < 80:
+                nome = candidato
+
+        # Extrai data
+        m_data = re.search(r"\*\*(\d{2}/\d{2}/\d{4})\*\*", chunk)
+        data = m_data.group(1) if m_data else ""
+
+        # Extrai horário
+        m_hora = re.search(r"\*\*\d{2}/\d{2}/\d{4}\*\*\s+([\d:]+)\s*–\s*([\d:]+)", chunk)
+        horario = f"{m_hora.group(1)} – {m_hora.group(2)}" if m_hora else ""
+
+        # Extrai local (inclui o mundo)
+        m_local = re.search(r"(Bloco\s+[^\n·]+·\s*Mundo\s+[^\n]+)", chunk)
+        local = m_local.group(1).strip() if m_local else ""
+        if not local:
+            m_local2 = re.search(r"(Florestan\s+[^\n·]+·\s*Mundo\s+[^\n]+)", chunk)
+            local = m_local2.group(1).strip() if m_local2 else ""
+
+        # Extrai tema (linha ### após a atividade)
+        m_tema = re.search(r"^###[ \t]+(.+)$", chunk, flags=re.MULTILINE)
+        tema = m_tema.group(1).strip() if m_tema else ""
+
+        # Monta a linha da palestra
+        partes_linha = [f"**{nome}**"]
+        if data:
+            partes_linha.append(f"{data}")
+        if horario:
+            partes_linha.append(f"{horario}")
+        if local:
+            partes_linha.append(f"{local}")
+        if tema:
+            partes_linha.append(f"— {tema}")
+
+        linhas.append(" | ".join(partes_linha))
+
+    if not linhas:
+        return "Não encontrei informações sobre palestras desse mundo nos conteúdos offline do festival."
+
+    return "\n".join(linhas)
 
 
 def get_terminal_size():
@@ -527,14 +702,18 @@ def main():
 
         # Quando a pergunta pergunta por palestras de um mundo específico, busca
         # diretamente nos chunks de palestrantes.md que mencionam esse mundo.
+        listagem_palestras = False
         if any(p in pergunta.lower() for p in ["palestra", "palestras", "programação", "programacao"]):
-            mundo = _extrair_mundo_da_pergunta(pergunta)
+            mundo = extrair_mundo_da_pergunta(pergunta)
             if mundo:
-                palestras_mundo = _buscar_palestras_por_mundo(mundo, chunks, metadados)
+                palestras_mundo = buscar_palestras_por_mundo(mundo, chunks, metadados)
                 if palestras_mundo:
                     fontes_existentes = {r["chunk"] for r in resultados}
                     novas = [r for r in palestras_mundo if r["chunk"] not in fontes_existentes]
                     resultados = novas + resultados
+                    listagem_palestras = True
+                    # Na listagem de palestras por mundo, mostra apenas os palestrantes
+                    resultados = [r for r in resultados if is_fonte_palestrante(r["source"])]
 
         contexto = format_context(resultados)
 
