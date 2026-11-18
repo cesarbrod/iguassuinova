@@ -16,6 +16,10 @@ import tty
 import urllib.request
 from pathlib import Path
 
+_CHATBOT_DIR = Path(__file__).resolve().parent
+if str(_CHATBOT_DIR) not in sys.path:
+    sys.path.insert(0, str(_CHATBOT_DIR))
+
 import numpy as np
 from groq import Groq
 
