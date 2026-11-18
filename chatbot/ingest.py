@@ -21,7 +21,18 @@ def read_md_files(content_dir: Path) -> list[dict]:
     docs = []
     for md_path in sorted(content_dir.glob("*.md")):
         text = md_path.read_text(encoding="utf-8")
+        # Extrai o título do conteúdo (primeiro cabeçalho # ou ## após a linha Fonte:)
         title = md_path.stem.replace("-", " ").title()
+        for linha in text.split("\n"):
+            linha = linha.strip()
+            if linha.startswith("# Fonte:"):
+                continue
+            if linha.startswith("# "):
+                title = linha[2:].strip()
+                break
+            if linha.startswith("## ") and not linha.startswith("## Nossos"):
+                title = linha[3:].strip()
+                break
         docs.append({"source": md_path.name, "title": title, "text": text, "path": str(md_path)})
     return docs
 

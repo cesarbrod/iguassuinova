@@ -1,80 +1,116 @@
-# O Festival é Seu — Festival Iguassu Inova 2026
+# Fonte: https://festivaliguassuinova.com.br/o-festival-e-seu.html
 
-# Talento e negócios que fazem o Festival acontecer
+[ ![Festival Iguassu Inova Logo](/images/logo-dark.png) ](/index.html)
 
-As inscrições para fazer parte da programação oficial do Festival Iguassu Inova foram encerradas. Agora, os projetos, ideias e negócios da região se preparam para 4 dias de conexões impulsionadoras e um público vibrante e internacional.
+  * [Início](/index.html)
+  * [Palestrantes](/palestrantes.html)
+  * [Mundos](/index.html#mundos)
+  * [O Festival é Seu](/o-festival-e-seu.html)
+  * [FAQ](/faq.html)
 
-Não foi nesta edição? Esperamos sua proposta no próximo Festival É Seu!
+[ Ingressos Gratuitos ](https://festivaliguassuinova.yazotickets.com/pt-BR/eventos/festival-iguassu-inova?utm_source=site_oficial&utm_medium=botao_menu&utm_campaign=festival_2026&utm_content=ingressos_gratuitos "Ingressos Gratuitos")
 
-[Resultado final](https://campanha.itaipuparquetec.org.br/wp-content/uploads/2026/10/Resultado-Final-Festival-e-Seu.pdf) [Conheça os selecionados](https://campanha.itaipuparquetec.org.br/wp-content/uploads/2026/10/Resultado-Festival-e-Seu.pdf) [Retificação do cronograma](https://campanha.itaipuparquetec.org.br/wp-content/uploads/2026/10/Retificacao-Cronograma-Festival-e-Seu.pdf)
+#  Talento e negócios que fazem o Festival acontecer 
 
-## O PALCO É SEU
+As inscrições para fazer parte da programação oficial do Festival Iguassu Inova foram encerradas. Agora, os projetos, ideias e negócios da região se preparam para 4 dias de conexões impulsionadoras e um público vibrante e internacional. 
 
-Tem uma ideia, experiência ou conhecimento para compartilhar por meio de uma palestra? O palco do Festival pode ser o espaço para você apresentar aquilo que sabe, acredita e quer colocar em diálogo com um público diverso, curioso e conectado à inovação.
+Não foi nesta edição? Esperamos sua proposta no próximo Festival É Seu! 
 
-### Critérios para participar:
+[ Resultado final ](https://campanha.itaipuparquetec.org.br/wp-content/uploads/2026/10/Resultado-Final-Festival-e-Seu.pdf "Confira o Resultado Final \(PDF\)") [ Conheça os selecionados ](https://campanha.itaipuparquetec.org.br/wp-content/uploads/2026/10/Resultado-Festival-e-Seu.pdf "Confira o Resultado dos Selecionados \(PDF\)") [ Retificação do cronograma ](https://campanha.itaipuparquetec.org.br/wp-content/uploads/2026/10/Retificacao-Cronograma-Festival-e-Seu.pdf "Confira a Retificação do Cronograma \(PDF\)")
 
-- Conteúdo relevante e alinhado às trilhas temáticas do Festival;
-- Propostas sem viés puramente comercial ou de vendas diretas;
-- Disponibilidade presencial durante as datas do evento.
+PALESTRAS 
 
-*Confira o regulamento completo aqui.* [Baixar Regulamento em PDF](/docs/regulamento-festival-e-seu-1.pdf).
+##  O PALCO É SEU 
 
-Chamada encerrada. Nos vemos em 2027!
+Tem uma ideia, experiência ou conhecimento para compartilhar por meio de uma palestra? **O palco do Festival pode ser o espaço para você apresentar aquilo que sabe** , acredita e quer colocar em diálogo com um público diverso, curioso e conectado à inovação. 
 
-[Conheça os selecionados](https://campanha.itaipuparquetec.org.br/wp-content/uploads/2026/10/Resultado-Festival-e-Seu.pdf)
+####  ✔ Critérios para participar: 
 
-## PARA SUA STARTUP
+  * • Conteúdo relevante e alinhado às trilhas temáticas do Festival;
+  * • Propostas sem viés puramente comercial ou de vendas diretas;
+  * • Disponibilidade presencial durante as datas do evento.
 
-Sua startup no centro das conexões do Festival. Mostre o que você está construindo, apresente sua solução, encontre potenciais parceiros, clientes e investidores, e aproveite novas oportunidades na Vila de Negócios.
+*[Confira o regulamento completo aqui](/docs/regulamento-festival-e-seu-1.pdf "Baixar Regulamento em PDF"). 
 
-### Critérios para participar:
+Chamada encerrada. Nos vemos em 2027! 
 
-- Startups com modelo de negócio inovador;
-- Propostas alinhadas com tecnologia, sustentabilidade e impacto social;
-- Presença de representantes durante todo o período do evento.
+[ Conheça os selecionados ](https://campanha.itaipuparquetec.org.br/wp-content/uploads/2026/10/Resultado-Festival-e-Seu.pdf "Confira os selecionados \(PDF\)")
 
-*Confira o regulamento completo aqui.* [Baixar Regulamento em PDF](/docs/regulamento-festival-e-seu-1.pdf).
+![Apresentação e Palestras no Palco Principal](/images/o-festival-e-seu/palco/54871672642_29267e1b9c_k.jpg)
 
-Chamada encerrada. Nos vemos em 2027!
+![Palco e Plateia do Festival Iguassu Inova](/images/o-festival-e-seu/palco/54874828587_5f6e8b4328_k.jpg)
 
-[Conheça os selecionados](https://campanha.itaipuparquetec.org.br/wp-content/uploads/2026/10/Resultado-Festival-e-Seu.pdf)
+![Palestrante Compartilhando Ideias e Inovação](/images/o-festival-e-seu/palco/54877115020_4c1e5dd587_c.jpg)
 
-## A OFICINA É SUA
+VILA DE NEGÓCIOS 
 
-Tem algo para ensinar ou criar com o público? Proponha uma oficina ou atividade prática e transforme seu conhecimento em uma experiência para quem estiver no Festival. Aqui, o público não apenas assiste: participa, experimenta e aprende com você.
+##  PARA SUA STARTUP 
 
-### Critérios para participar:
+Sua startup no centro das conexões do Festival. Mostre o que você está construindo, apresente sua solução, encontre potenciais parceiros, clientes e investidores, e aproveite novas oportunidades na Vila de Negócios. 
 
-- Foco em atividades práticas e interativa com o público;
-- Definição clara de pré-requisitos e infraestrutura necessária;
-- Conteúdo focado em capacitação, tecnologia, entre outros.
+####  ✔ Critérios para participar: 
 
-*Confira o regulamento completo aqui.* [Baixar Regulamento em PDF](/docs/regulamento-festival-e-seu-1.pdf).
+  * • Startups com modelo de negócio inovador;
+  * • Propostas alinhadas com tecnologia, sustentabilidade e impacto social;
+  * • Presença de representantes durante todo o período do evento.
 
-Chamada encerrada. Nos vemos em 2027!
+*[Confira o regulamento completo aqui](/docs/regulamento-festival-e-seu-1.pdf "Baixar Regulamento em PDF"). 
 
-[Conheça os selecionados](https://campanha.itaipuparquetec.org.br/wp-content/uploads/2026/10/Resultado-Festival-e-Seu.pdf)
+Chamada encerrada. Nos vemos em 2027! 
 
-## Nossos Mundos
+[ Conheça os selecionados ](https://campanha.itaipuparquetec.org.br/wp-content/uploads/2026/10/Resultado-Festival-e-Seu.pdf "Confira os selecionados \(PDF\)")
 
--   [Mundo FICiências](/ficiencias.html)
--   [Mundo Itaipu Parquetec](/itaipu-parquetec.html)
--   [Mundo Sapiens](/sapiens.html)
--   [Mundo Summit Tour](/summit-tour.html)
--   [Mundo FIMS (Novo)](/fims.html)
--   [Mundo RME (Novo)](/rme.html)
+![Exposição e Pitch de Startups na Vila de Negócios](/images/o-festival-e-seu/startups/54874816467_3ef2a640e8_k.jpg)
 
-## O Festival
+![Rodada de Negócios e Conexão de Startups](/images/o-festival-e-seu/startups/54873182953_632037c560_k.jpg)
 
--   [Palestrantes](/palestrantes.html)
--   [O Festival é Seu](/o-festival-e-seu.html)
--   [Imprensa](https://festivaliguassuinova.com.br/imprensa/)
--   [Dúvidas Frequentes](/faq.html)
+![Estandes e Networking na Vila de Negócios](/images/o-festival-e-seu/startups/54879671690_1b8614770f_k.jpg)
 
-## Redes Sociais
+OFICINAS 
 
-[@festivaliguassuinova](https://www.instagram.com/festivaliguassuinova/)
+##  A OFICINA É SUA 
+
+Tem algo para ensinar ou criar com o público? Proponha uma oficina ou atividade prática e transforme seu conhecimento em uma experiência para quem estiver no Festival. Aqui, o público não apenas assiste: participa, experimenta e aprende com você. 
+
+####  ✔ Critérios para participar: 
+
+  * • Foco em atividades práticas e interativa com o público;
+  * • Definição clara de pré-requisitos e infraestrutura necessária;
+  * • Conteúdo focado em capacitação, tecnologia, entre outros.
+
+*[Confira o regulamento completo aqui](/docs/regulamento-festival-e-seu-1.pdf "Baixar Regulamento em PDF"). 
+
+Chamada encerrada. Nos vemos em 2027! 
+
+[ Conheça os selecionados ](https://campanha.itaipuparquetec.org.br/wp-content/uploads/2026/10/Resultado-Festival-e-Seu.pdf "Confira os selecionados \(PDF\)")
+
+![Participante com Robô em Atividade Prática](/images/o-festival-e-seu/oficinas/54883896904_533fc1274f_o.jpg)
+
+![Oficina Prática e Interativa com o Público](/images/o-festival-e-seu/oficinas/54879662479_65df65274a_k.jpg)
+
+![Criação e Aprendizado Mão na Massa](/images/o-festival-e-seu/oficinas/54883866048_ec07611036_k.jpg)
+
+![Festival Iguassu Inova Logo](/images/logo-dark.png)
+
+#### Nossos Mundos
+
+  * [Mundo FICiências](/ficiencias.html)
+  * [Mundo Itaipu Parquetec](/itaipu-parquetec.html)
+  * [Mundo Sapiens](/sapiens.html)
+  * [Mundo Summit Tour](/summit-tour.html)
+  * [Mundo FIMS (Novo)](/fims.html)
+  * [Mundo RME (Novo)](/rme.html)
+
+#### O Festival
+
+  * [Palestrantes](/palestrantes.html)
+  * [O Festival é Seu](/o-festival-e-seu.html)
+  * [Imprensa](https://festivaliguassuinova.com.br/imprensa/)
+  * [Dúvidas Frequentes](/faq.html)
+
+#### Redes Sociais
+
+[ @festivaliguassuinova ](https://www.instagram.com/festivaliguassuinova/ "Instagram @festivaliguassuinova")
 
 [Termos de uso](/termos-de-uso.html) | [Política de Cookies](/politica-de-cookies.html) | [Termos de Participação](/termos-de-participacao.html)
 

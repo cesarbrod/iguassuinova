@@ -93,6 +93,65 @@ def format_context(results):
     return "\n---\n".join(parts)
 
 
+# Nomes dos seis mundos do festival (usados para busca direta de palestras por mundo)
+MUNDOS_NOMES = {
+    "ficiencias": "Mundo FICiências",
+    "ficienicias": "Mundo FICiências",
+    "itaipu parquetec": "Mundo Itaipu Parquetec",
+    "itaipu": "Mundo Itaipu Parquetec",
+    "sapiens": "Mundo Sapiens",
+    "summit tour": "Mundo Summit Tour",
+    "summit": "Mundo Summit Tour",
+    "fims": "Mundo FIMS",
+    "rme": "Mundo RME",
+}
+
+
+def _extrair_mundo_da_pergunta(question):
+    """Retorna o nome do mundo mencionado na pergunta, se houver."""
+    q = question.lower()
+    for chave, nome in MUNDOS_NOMES.items():
+        if chave in q:
+            return nome
+    return None
+
+
+def _is_fonte_palestrante(fonte: str) -> bool:
+    return fonte == "palestrantes.md" or fonte.startswith("palestrante-perfil")
+
+
+def _buscar_palestras_por_mundo(mundo, chunks, metadados, limit=8):
+    """Busca nos chunks de palestrantes.md aqueles que mencionam o mundo dado.
+
+    Retorna resultados no mesmo formato de retrieve (score fixo 1.0). Isola a
+    seção do palestrante (ate o proximo ### ) para nao mesclar dois palestrantes
+    no mesmo chunk.
+    """
+    import re as _re
+
+    resultados = []
+    for i, chunk in enumerate(chunks):
+        if not _is_fonte_palestrante(metadados[i]["source"]):
+            continue
+        texto = chunk.lower()
+        if mundo.lower() not in texto:
+            continue
+        if not any(p.lower() in texto for p in ["data:", "horário:", "local:", "bloco", "espaço", "sala"]):
+            continue
+        # Isola a parte do chunk antes do próximo cabeçalho ### (não mescla palestrantes)
+        partes = _re.split(r"\n(### |## )", chunk, maxsplit=1)
+        bloco = partes[0].strip() if partes else chunk.strip()
+        resultados.append({
+            "score": 1.0,
+            "chunk": bloco.strip(),
+            "source": metadados[i]["source"],
+            "title": metadados[i]["title"],
+        })
+        if len(resultados) >= limit:
+            break
+    return resultados
+
+
 def get_terminal_size():
     return shutil.get_terminal_size(fallback=(80, 24))
 
@@ -465,6 +524,18 @@ def main():
 
         # Recupera chunks relevantes
         resultados = retrieve(pergunta, vectors, chunks, metadados, vectorizer, top_k=TOP_K)
+
+        # Quando a pergunta pergunta por palestras de um mundo específico, busca
+        # diretamente nos chunks de palestrantes.md que mencionam esse mundo.
+        if any(p in pergunta.lower() for p in ["palestra", "palestras", "programação", "programacao"]):
+            mundo = _extrair_mundo_da_pergunta(pergunta)
+            if mundo:
+                palestras_mundo = _buscar_palestras_por_mundo(mundo, chunks, metadados)
+                if palestras_mundo:
+                    fontes_existentes = {r["chunk"] for r in resultados}
+                    novas = [r for r in palestras_mundo if r["chunk"] not in fontes_existentes]
+                    resultados = novas + resultados
+
         contexto = format_context(resultados)
 
         mensagens = [{"role": "system", "content": SYSTEM_PROMPT}]
