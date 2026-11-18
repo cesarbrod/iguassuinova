@@ -3,17 +3,13 @@
 
 Backend: Flask. Frontend: HTML/CSS/JS com look and feel BrodTec (brodtec.com).
 Integra a lógica RAG existente (ingest.py + chatbot.py).
-Tenta modelo local via Ollama primeiro (mais rápido), depois Groq (nuvem).
+Respostas baseadas no contexto offline via busca TF-IDF.
 """
 
 from __future__ import annotations
 
 import json
-import os
-import subprocess
 import sys
-import time
-import urllib.request
 from pathlib import Path
 
 # Garante que o diretório pai (raiz do projeto) esteja no início do path
@@ -81,121 +77,7 @@ def load_rag() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Ollama helpers
-# ---------------------------------------------------------------------------
-
-OLLAMA_HOST = "http://localhost:11434"
-
-
-def ollama_is_running() -> bool:
-    try:
-        req = urllib.request.Request(f"{OLLAMA_HOST}/api/tags")
-        with urllib.request.urlopen(req, timeout=3) as resp:
-            return resp.status == 200
-    except Exception:
-        return False
-
-
-def ollama_list_models() -> list[str]:
-    try:
-        req = urllib.request.Request(f"{OLLAMA_HOST}/api/tags")
-        with urllib.request.urlopen(req, timeout=5) as resp:
-            data = json.loads(resp.read().decode())
-        return [m["name"] for m in data.get("models", [])]
-    except Exception:
-        return []
-
-
-def ollama_chat(model: str, mensagens: list[dict]) -> str | None:
-    """Chama o modelo local via Ollama. Retorna None se falhar."""
-    # Constrói um prompt único combinando system + mensagens
-    prompt_parts = []
-    for msg in mensagens:
-        role = msg.get("role", "user")
-        content = msg.get("content", "")
-        if role == "system":
-            prompt_parts.append(f"Instruções do sistema: {content}")
-        elif role == "user":
-            prompt_parts.append(f"Usuário: {content}")
-        elif role == "assistant":
-            prompt_parts.append(f"Assistente: {content}")
-    prompt_parts.append("Assistente: Responda diretamente em português, sem mostrar processo de pensamento.")
-    full_prompt = "\n\n".join(prompt_parts)
-
-    payload = {
-        "model": model,
-        "prompt": full_prompt,
-        "stream": False,
-        "options": {"temperature": 0.3, "num_predict": 400},
-    }
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        f"{OLLAMA_HOST}/api/generate",
-        data=data,
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            resultado = json.loads(resp.read().decode())
-        response = resultado.get("response", "").strip()
-        # Remove qualquer bloco de thinking que possa aparecer
-        response = response.replace("Thinking Process:", "")
-        response = response.replace("**Thinking Process:**", "")
-        return response.strip() if response else None
-    except Exception as exc:  # noqa: BLE001
-        print(f"[DEBUG] Erro Ollama: {exc}", flush=True)
-        return None
-
-
-def choose_ollama_model() -> str | None:
-    """Escolhe um modelo local disponível no Ollama."""
-    if not ollama_is_running():
-        return None
-    models = ollama_list_models()
-    if not models:
-        return None
-    # Prefere modelos conhecidos que funcionam bem com RAG
-    preferidos = ["gemma3:4b", "phi3:mini", "llama3.1:8b"]
-    for p in preferidos:
-        if p in models:
-            return p
-    # Se não encontrar nenhum preferido, retorna o primeiro
-    return models[0]
-
-
-# ---------------------------------------------------------------------------
-# Groq helpers
-# ---------------------------------------------------------------------------
-
-def groq_chat(mensagens: list[dict]) -> str | None:
-    """Chama o modelo Groq. Retorna None se falhar."""
-    try:
-        from groq import Groq
-    except Exception:
-        return None
-
-    api_key = os.environ.get("GROQ_API_KEY")
-    if not api_key:
-        return None
-
-    try:
-        client = Groq(api_key=api_key)
-        resposta = client.chat.completions.create(
-            model="qwen/qwen3.8-27b",
-            messages=mensagens,
-            temperature=0.3,
-            max_tokens=400,
-            timeout=15,
-        )
-        return resposta.choices[0].message.content.strip()
-    except Exception as exc:  # noqa: BLE001
-        print(f"[DEBUG] Erro Groq: {exc}", flush=True)
-        return None
-
-
-# ---------------------------------------------------------------------------
-# RAG answer
+# RAG answer (baseado apenas no contexto offline)
 # ---------------------------------------------------------------------------
 
 def rag_answer(question: str) -> str:
@@ -231,7 +113,6 @@ def rag_answer(question: str) -> str:
                 if caminho.exists():
                     texto_arquivo = caminho.read_text(encoding="utf-8")
                     if "Mundo" in texto_arquivo:
-                        # Encontra a seção que lista os 6 mundos
                         linhas = texto_arquivo.split("\n")
                         linhas_mundos = [l for l in linhas if ("Mundo FICiências" in l or "Mundo Itaipu" in l or "Mundo Sapiens" in l or "Mundo Summit" in l or "Mundo FIMS" in l or "Mundo RME" in l)]
                         if linhas_mundos:
@@ -273,7 +154,18 @@ def _format_answer(resultados: list[dict]) -> str:
     partes = []
     fontes_vistas = set()
 
-    for r in resultados:
+    # Se há resultado de palestrantes.md, mostra apenas esse (já é suficiente)
+    palestrantes_result = [r for r in resultados if r["source"] == "palestrantes.md"]
+    outros_result = [r for r in resultados if r["source"] != "palestrantes.md"]
+
+    # Se há resultado de mundos.md, mostra apenas esse (já é suficiente)
+    mundos_result = [r for r in outros_result if r["source"] == "mundos.md"]
+    outros_result = [r for r in outros_result if r["source"] != "mundos.md"]
+
+    # Ordem de prioridade: palestrantes > mundos > faq > outros
+    resultados_ordenados = palestrantes_result + mundos_result + outros_result
+
+    for r in resultados_ordenados:
         fonte = f"{r['title']} ({r['source']})"
         if fonte in fontes_vistas:
             continue
@@ -295,9 +187,7 @@ def _format_answer(resultados: list[dict]) -> str:
             continue
 
         # Para perguntas sobre uma pessoa específica, prioriza o chunk que menciona o nome
-        # Se o chunk é de "Palestrantes" e é muito longo, tenta extrair só a seção relevante
         if r["source"] == "palestrantes.md" and len(chunk) > 500:
-            # Tenta encontrar o nome da pessoa no chunk e extrair só a seção dela
             linhas = chunk.split("\n")
             linhas_filtradas = []
             captura = False
@@ -315,9 +205,6 @@ def _format_answer(resultados: list[dict]) -> str:
 
         # Se já temos uma fonte principal relevante, não precisamos de mais
         if r["source"] in ("palestrantes.md", "mundos.md", "faq.md"):
-            # Para acessibilidade, ingresso, datas - FAQ é suficiente
-            # Para pessoas - palestrantes.md é suficiente
-            # Para mundos - mundos.md é suficiente
             break
 
     if not partes:
