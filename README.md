@@ -147,7 +147,33 @@ python3 ingest.py
 
 Isso gerará os arquivos em `index/` (vectors.npy, chunks.json, metadados.json, vectorizer.json) usados pelo chatbot para busca por similaridade.
 
-### 3. Escolher o backend de LLM
+---
+
+## Versão web (servidor local)
+
+Além da versão CLI (`chatbot.py`), o projeto inclui uma versão web com servidor Flask e interface com look and feel BrodTec (baseado em brodertec.com).
+
+### Como executar a versão web
+
+```bash
+cd /home/brod/scripts/opencode/iguassuinova/web
+python3 app.py
+```
+
+Acesse: http://localhost:5000
+
+### Recursos da versão web
+
+- Interface responsiva com tema BrodTec (cores laranja, tipografia Space Grotesk/Work Sans/JetBrains Mono)
+- Chat interativo com mensagens de usuário e bot
+- Perguntas sugeridas clicáveis
+- Paginação de mensagens (Tecle espaço para continuar)
+- Word wrapping automático
+- Busca baseada em conteúdo offline (sem depender de modelo LLM externo)
+
+---
+
+### 3. Escolher o backend de LLM (apenas para versão CLI)
 
 O chatbot suporta duas opções:
 
