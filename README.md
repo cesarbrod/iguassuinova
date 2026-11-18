@@ -171,6 +171,8 @@ Acesse: http://localhost:5000
 - Word wrapping automático
 - Busca baseada em conteúdo offline (sem depender de modelo LLM externo)
 
+Para detalhes completos da versão web (instalação, escolha de modelo, rotas da API e interface), consulte [`web/README.md`](web/README.md).
+
 ---
 
 ### 3. Escolher o backend de LLM (apenas para versão CLI)

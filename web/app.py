@@ -3,11 +3,12 @@
 
 Backend: Flask. Frontend: HTML/CSS/JS com look and feel BrodTec (brodtec.com).
 Integra a lógica RAG existente (ingest.py + chatbot.py).
-Respostas baseadas no contexto offline via busca TF-IDF.
+Respostas baseadas no contexto offline via busca TF-IDF e LLM local (Ollama).
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -27,12 +28,18 @@ from chatbot.chatbot import (
     format_context,
     clean_response,
     cosine_similarity,
+    ollama_chat,
+    ollama_is_running,
+    ollama_list_models,
+    OLLAMA_HOST,
 )
 
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
+
+DEFAULT_OLLAMA_MODEL = "gemma3:4b"
 
 # ---------------------------------------------------------------------------
 # Estado global do RAG
@@ -41,6 +48,7 @@ _vectorizer: TfidfVectorizer | None = None
 _vectors = None
 _chunks: list[str] = []
 _metadados: list[dict] = []
+_ollama_model: str | None = None
 
 
 def ensure_index() -> None:
@@ -77,11 +85,16 @@ def load_rag() -> None:
 
 
 # ---------------------------------------------------------------------------
-# RAG answer (baseado apenas no contexto offline)
+# RAG answer (usa LLM local via Ollama quando disponível; fallback chunks brutos)
 # ---------------------------------------------------------------------------
 
 def rag_answer(question: str) -> str:
-    """Gera uma resposta RAG para a pergunta usando apenas o contexto offline."""
+    """Gera uma resposta RAG para a pergunta.
+
+    Usa o modelo local (Ollama) quando um modelo estiver selecionado e o
+    servidor Ollama estiver rodando. Caso contrário, retorna os chunks
+    brutos formatados (comportamento anterior, sem LLM).
+    """
     if _vectorizer is None:
         load_rag()
 
@@ -143,7 +156,20 @@ def rag_answer(question: str) -> str:
         resultados_outros = [r for r in resultados if r["source"] not in ("index.md", "faq.md")]
         resultados = resultados_index + resultados_outros
 
-    # Monta resposta baseada no contexto (sem depender de modelo externo)
+    contexto = format_context(resultados)
+
+    # Usa LLM local via Ollama, se configurado e rodando
+    if _ollama_model and ollama_is_running():
+        mensagens = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": RAG_PROMPT.format(context=contexto, question=question)},
+        ]
+        texto = ollama_chat(_ollama_model, mensagens)
+        if texto and not texto.startswith("Desculpe, ocorreu um erro"):
+            return clean_response(texto)
+        print("[DEBUG] Ollama falhou, fazendo fallback para chunks brutos", flush=True)
+
+    # Fallback: formata resposta a partir dos chunks (sem modelo externo)
     return _format_answer(resultados)
 
 
@@ -260,6 +286,54 @@ def api_chat():
     return jsonify({"answer": resposta})
 
 
+@app.route("/api/ollama/status", methods=["GET"])
+def api_ollama_status():
+    """Retorna status do Ollama, modelos disponíveis e modelo selecionado."""
+    running = ollama_is_running()
+    models = ollama_list_models() if running else []
+    return jsonify({
+        "running": running,
+        "models": models,
+        "selected": _ollama_model,
+        "host": OLLAMA_HOST,
+        "default_model": DEFAULT_OLLAMA_MODEL,
+    })
+
+
+@app.route("/api/ollama/select", methods=["POST"])
+def api_ollama_select():
+    """Seleciona o modelo local (Ollama) a ser usado pelo chat web."""
+    global _ollama_model
+    try:
+        data = request.get_json(silent=True) or {}
+    except Exception:
+        return jsonify({"error": "JSON inválido"}), 400
+    model = (data.get("model") or "").strip()
+    if not model:
+        _ollama_model = None
+        return jsonify({"ok": True, "selected": None, "message": "LLM local desativado."})
+    available = ollama_list_models() if ollama_is_running() else []
+    if model not in available:
+        return jsonify({"error": f"Modelo '{model}' não encontrado no Ollama. Modelos: {available}"}), 400
+    _ollama_model = model
+    return jsonify({"ok": True, "selected": _ollama_model, "message": f"Usando modelo local: {model}"})
+
+
+@app.route("/api/ollama/start", methods=["POST"])
+def api_ollama_start():
+    """Tenta iniciar o servidor Ollama (ollama serve)."""
+    from chatbot.chatbot import start_ollama
+    proc = start_ollama()
+    running = ollama_is_running()
+    models = ollama_list_models() if running else []
+    return jsonify({
+        "running": running,
+        "models": models,
+        "selected": _ollama_model,
+        "message": "Ollama iniciado." if running else "Ollama não respondeu. Inicie manualmente com 'ollama serve'.",
+    })
+
+
 @app.route("/health")
 def health():
     return jsonify({"status": "ok"})
@@ -270,6 +344,55 @@ def health():
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Servidor web do chatbot Festival Iguassu Inova 2026")
+    parser.add_argument(
+        "--modelo",
+        default=DEFAULT_OLLAMA_MODEL,
+        help=f"Modelo Ollama a usar (padrão: {DEFAULT_OLLAMA_MODEL}). Use 'nenhum' para desativar o LLM local.",
+    )
+    parser.add_argument(
+        "--host",
+        default="0.0.0.0",
+        help="Host do servidor (padrão: 0.0.0.0)",
+    )
+    parser.add_argument(
+        "--porta",
+        type=int,
+        default=5000,
+        help="Porta do servidor (padrão: 5000)",
+    )
+    args = parser.parse_args()
+
     load_rag()
-    print("Servidor web iniciado em http://localhost:5000")
-    app.run(host="0.0.0.0", port=5000, debug=False, threaded=True)
+
+    modelo_request = (args.modelo or "").strip()
+
+    if modelo_request.lower() in {"nenhum", "none", "off", "desativado", ""}:
+        _ollama_model = None
+        print("LLM local desativado (resposta direta dos conteúdos offline).")
+    else:
+        if ollama_is_running():
+            modelos_disponiveis = ollama_list_models()
+            if modelo_request in modelos_disponiveis:
+                _ollama_model = modelo_request
+                print(f"Modelo local selecionado: {_ollama_model}")
+            else:
+                print(
+                    f"Aviso: modelo '{modelo_request}' não encontrado no Ollama. "
+                    f"Modelos disponíveis: {modelos_disponiveis}"
+                )
+                if DEFAULT_OLLAMA_MODEL in modelos_disponiveis:
+                    _ollama_model = DEFAULT_OLLAMA_MODEL
+                    print(f"Usando modelo padrão: {_ollama_model}")
+                else:
+                    print("Nenhum modelo adequado disponível. LLM local desativado.")
+                    _ollama_model = None
+        else:
+            print(
+                "Aviso: Ollama não está rodando. Inicie com 'ollama serve' ou execute "
+                "com --modelo nenhum para usar resposta direta dos conteúdos."
+            )
+
+    print(f"Servidor web iniciado em http://{args.host}:{args.porta}")
+    print(f"Modelo LLM ativo: {_ollama_model if _ollama_model else 'nenhum (chunks brutos)'}")
+    app.run(host=args.host, port=args.porta, debug=False, threaded=True)

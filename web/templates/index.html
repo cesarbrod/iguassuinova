@@ -143,6 +143,14 @@
             <li><button class="suggest-btn" data-q="Preciso me inscrever nas oficinas?">Inscrição em oficinas</button></li>
           </ul>
         </div>
+        <div class="sidebar-card" style="margin-top:16px;">
+          <div class="sidebar-eyebrow">Modelo de linguagem (local)</div>
+          <div id="ollama-status" class="ollama-status" style="font-size:0.85rem; margin-bottom:8px; font-weight:600;">Verificando Ollama…</div>
+          <select id="ollama-model" class="ollama-select" style="width:100%; padding:6px 8px; font-size:0.85rem; border:1px solid var(--border); border-radius:6px; background:var(--bg-alt); color:var(--ink);">
+            <option value="">Nenhum (resposta direta dos conteúdos)</option>
+          </select>
+          <p style="margin-top:6px; font-size:0.8rem; color:var(--ink-soft);">Requer Ollama rodando em localhost:11434.</p>
+        </div>
       </aside>
 
       <!-- Área do chat -->
