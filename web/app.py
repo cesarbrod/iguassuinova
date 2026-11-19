@@ -192,7 +192,7 @@ def rag_answer(question: str) -> str:
         print("[DEBUG] Ollama falhou, fazendo fallback para chunks brutos", flush=True)
 
     # Fallback: formata resposta a partir dos chunks (sem modelo externo)
-    return format_answer(resultados, listagem_palestras=listagem_palestras)
+    return format_answer(resultados, listagem_palestras=listagem_palestras, html=listagem_palestras)
 
 
 # ---------------------------------------------------------------------------

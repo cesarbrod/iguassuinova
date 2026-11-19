@@ -182,7 +182,7 @@ def buscar_palestras_por_mundo(mundo, chunks, metadados, limit=200):
     return resultados
 
 
-def format_answer(resultados: list[dict], listagem_palestras: bool = False) -> str:
+def format_answer(resultados: list[dict], listagem_palestras: bool = False, html: bool = False) -> str:
     """Formata uma resposta concisa e bem estruturada a partir dos chunks.
 
     Quando ``listagem_palestras`` é True, mostra todos os palestrantes relevantes
@@ -191,7 +191,7 @@ def format_answer(resultados: list[dict], listagem_palestras: bool = False) -> s
     import re
 
     if listagem_palestras:
-        return _formatar_lista_palestras(resultados)
+        return _formatar_lista_palestras(resultados, html=html)
 
     partes = []
     fontes_vistas = set()
@@ -255,9 +255,16 @@ def format_answer(resultados: list[dict], listagem_palestras: bool = False) -> s
     return clean_response(texto)
 
 
-def _formatar_lista_palestras(resultados: list[dict]) -> str:
-    """Formata uma listagem de palestras por mundo, com nome, data, local e tema."""
+def _formatar_lista_palestras(resultados: list[dict], html: bool = False) -> str:
+    """Formata uma listagem de palestras por mundo, com nome, data, local e tema.
+
+    Quando ``html`` é True, usa <bold>...</bold> (para a interface web).
+    Quando False, usa códigos ANSI de negrito (para o terminal/CLI).
+    """
     import re
+
+    BOLD = "\033[1m" if not html else "<bold>"
+    RESET = "\033[0m" if not html else "</bold>"
 
     linhas = []
     fontes_vistas = set()
@@ -309,7 +316,7 @@ def _formatar_lista_palestras(resultados: list[dict]) -> str:
         tema = m_tema.group(1).strip() if m_tema else ""
 
         # Monta a linha da palestra
-        partes_linha = [f"<bold>{nome}</bold>"]
+        partes_linha = [f"{BOLD}{nome}{RESET}"]
         if data:
             partes_linha.append(f"{data}")
         if horario:
