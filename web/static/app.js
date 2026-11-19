@@ -26,6 +26,16 @@
     return div.innerHTML;
   }
 
+  // Converte <bold>...</bold> em <strong> e escapa o restante do texto
+  function formatarNegrito(text) {
+    const partes = text.split(/(<bold>|<\/bold>)/g);
+    return partes.map(part => {
+      if (part === '<bold>') return '<strong>';
+      if (part === '</bold>') return '</strong>';
+      return escapeHtml(part);
+    }).join('');
+  }
+
   function addMessage(text, role) {
     const wrapper = document.createElement('div');
     wrapper.className = `message ${role}`;
@@ -37,7 +47,7 @@
     const bubble = document.createElement('div');
     bubble.className = 'message-bubble';
     // Converte quebras de linha em parágrafos
-    const html = text.split('\n\n').map(p => `<p>${escapeHtml(p)}</p>`).join('');
+    const html = text.split('\n\n').map(p => `<p>${formatarNegrito(p)}</p>`).join('');
     bubble.innerHTML = html;
 
     wrapper.appendChild(avatar);

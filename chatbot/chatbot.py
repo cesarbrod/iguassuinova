@@ -309,7 +309,7 @@ def _formatar_lista_palestras(resultados: list[dict]) -> str:
         tema = m_tema.group(1).strip() if m_tema else ""
 
         # Monta a linha da palestra
-        partes_linha = [f"**{nome}**"]
+        partes_linha = [f"<bold>{nome}</bold>"]
         if data:
             partes_linha.append(f"{data}")
         if horario:
