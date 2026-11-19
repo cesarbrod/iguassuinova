@@ -90,6 +90,22 @@ web/
 - O índice de busca TF-IDF é gerado automaticamente na pasta `chatbot/index/` se ainda não existir.
 - As respostas usam apenas os conteúdos offline do site oficial do festival (não consultam a internet).
 
+## Atualizar o conteúdo offline
+
+O script `chatbot/scrape.py` captura páginas do site oficial e recria o índice:
+
+```bash
+cd /home/brod/scripts/opencode/iguassuinova/chatbot
+# Captura apenas as páginas principais
+python3 scrape.py
+# Captura também perfis individuais de palestrantes (demorado)
+python3 scrape.py --all
+# Limita a N perfis individuais
+python3 scrape.py --all --limite 50
+# Apenas reexecuta a indexação (sem baixar nada)
+python3 scrape.py --so-reindexar
+```
+
 ---
 
 Projeto educacional — Licença GPLv3+. Veja o [README raiz](../README.md) para detalhes do projeto, estrutura geral e licença.

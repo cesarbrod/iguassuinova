@@ -37,10 +37,11 @@ Veja o arquivo [`LICENSE`](LICENSE) ou https://www.gnu.org/licenses/gpl-3.0.html
 ```
 iguassuinova/
 ├── README.md                      # Documentação principal (este arquivo)
-├── offline-content/          # Conteúdo offline do site (14 arquivos markdown)
+├── offline-content/          # Conteúdo offline do site (arquivos markdown)
 │   ├── index.md              # Página principal (datas, local, palestrantes, patrocinadores)
 │   ├── faq.md                # Perguntas frequentes (ingressos, credenciamento, acessibilidade, LGPD)
-│   ├── palestrantes.md       # 223 palestrantes confirmados com biografias
+│   ├── palestrantes.md       # Palestrantes confirmados com biografias
+│   ├── palestrante-perfil-*.md  # Perfis individuais de palestrantes (capturados do site)
 │   ├── mundos.md             # 6 mundos com descrições detalhadas
 │   ├── ficiencias.md         # Mundo FICiências
 │   ├── itaipu-parquetec.md   # Mundo Itaipu Parquetec
@@ -53,22 +54,33 @@ iguassuinova/
 │   ├── politica-de-cookies.md# Política de cookies
 │   └── termos-de-participacao.md # Termos de participação
 ├── chatbot/
-│   ├── chatbot.py            # Executável principal (pergunta local vs Groq no início)
+│   ├── chatbot.py            # Executável principal (CLI; Ollama local ou Groq)
 │   ├── ingest.py             # Cria índice de busca TF-IDF dos conteúdos
+│   └── scrape.py             # Captura páginas do site oficial e reindexa
 │   └── index/                # Índice gerado automaticamente (vectors.npy, chunks.json, etc.)
+└── web/                      # Versão web (Flask + HTML/CSS/JS)
+    ├── app.py                # Servidor Flask e lógica RAG + LLM local (Ollama)
+    ├── README.md             # Documentação específica da versão web
+    ├── static/
+    │   ├── app.js            # Frontend: chat, status do Ollama, seletor de modelo
+    │   └── style.css         # Estilos BrodTec
+    └── templates/
+        └── index.html        # Página principal com chat integrado
 ```
 
 ---
 
-## Conteúdo offline (14 arquivos)
+## Conteúdo offline
 
 Todo o conteúdo do site https://festivaliguassuinova.com.br/ foi capturado e salvo em `offline-content/`:
+
+Os arquivos principais são:
 
 | Arquivo | Conteúdo |
 |---------|----------|
 | `index.md` | Página principal: datas (25 a 28 de novembro de 2026), local (Itaipu Parquetec, Foz do Iguaçu/PR), palestrantes em destaque, mundos, patrocinadores |
 | `faq.md` | Perguntas frequentes: ingressos, credenciamento, programação, acessibilidade, LGPD, certificado |
-| `palestrantes.md` | 223 palestrantes confirmados com biografias, incluindo Cesar Brod (Tecnologias do Futuro, 27/11/2026, 16h, Bloco 9 - Espaço 1 - Sala 2) |
+| `palestrantes.md` | Palestrantes confirmados com biografias, incluindo Cesar Brod (Tecnologias do Futuro, 27/11/2026, 16h, Bloco 9 - Espaço 1 - Sala 2) |
 | `mundos.md` | Consolidação dos 6 mundos com descrições detalhadas |
 | `ficiencias.md` | Mundo FICiências: curiosidade científica e ideias jovens |
 | `itaipu-parquetec.md` | Mundo Itaipu Parquetec: inovação aplicada, ciência e negócios |
@@ -80,6 +92,8 @@ Todo o conteúdo do site https://festivaliguassuinova.com.br/ foi capturado e sa
 | `termos-de-uso.md` | Termos e condições gerais de uso |
 | `politica-de-cookies.md` | Política de cookies |
 | `termos-de-participacao.md` | Termos e condições de participação |
+
+Além desses, há arquivos `palestrante-perfil-*.md` com os perfis individuais de cada palestrante (capturados do site oficial via script `scrape.py`), contendo data, horário, local e tema de cada atividade.
 
 ---
 
