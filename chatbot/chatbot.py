@@ -324,7 +324,7 @@ def _formatar_lista_palestras(resultados: list[dict]) -> str:
     if not linhas:
         return "Não encontrei informações sobre palestras desse mundo nos conteúdos offline do festival."
 
-    return "\n".join(linhas)
+    return "\n\n".join(linhas)
 
 
 def get_terminal_size():
