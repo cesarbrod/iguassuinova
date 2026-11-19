@@ -112,23 +112,26 @@ iguassuinova/
   - Remove imagens markdown (`![...](...)`).
   - Remove blocos de "Cards de Divulgação" e "Post para Instagram" (ruído visual).
   - Divide o texto em seções por cabeçalhos markdown (#, ##, ###).
-  - Cada seção torna-se um chunk (ou é dividida em parágrafos se exceder o tamanho).
-  - Retorna lista de strings com tamanho > 10 caracteres.
+  - Cada seção torna-se um chunk próprio (não descarta, não mescla dois palestrantes diferentes no mesmo chunk).
+  - Se uma seção exceder o tamanho, divide em parágrafos sem perder informações.
+  - Retorna TODA lista de strings geradas, com tamanho > 10 caracteres. Não filtre nem descarte chunks exceto os vazios ou muito curtos (< 10 chars).
 
 - `build_index(docs)`:
   - Cria `TfidfVectorizer(lowercase=True, stop_words=None, ngram_range=(1,2), max_df=0.9, min_df=1)`.
-  - Ajusta o vetorizador nos chunks.
+  - Ajusta o vetorizador em TODOS os chunks (não amostral, não limite).
   - Salva em `chatbot/index/`:
     - `vectors.npy`: matriz de vetores TF-IDF (numpy array).
-    - `chunks.json`: lista dos textos dos chunks.
+    - `chunks.json`: lista dos textos dos chunks (todos os chunks gerados).
     - `metadados.json`: lista de dicionários com `source`, `title`, `path` de cada chunk.
     - `vectorizer.json`: configuração do vetorizador (vocabulário, idf, max_df, min_df, ngram_range, lowercase).
 
 - `load_index()`:
   - Carrega `vectors.npy`, `chunks.json`, `metadados.json` dos arquivos salvos.
-  - Retorna `(vectors, chunks, metadados)`.
+  - Retorna `(vectors, chunks, metadados)` com todos os itens indexados.
 
-**Razão do chunking por cabeçalhos:** manter cada seção de palestrante (nome, data, horário, local, tema) coesa no mesmo chunk, evitando mistura de informações entre palestrantes diferentes.
+**Requisito de cobertura:** O índice deve conter um chunk para cada atividade/palestra de cada palestrante, incluindo nome, data, horário, local, mundo e tema. Não pode haver perda de atividades durante o chunking.
+
+**Razão do chunking por cabeçalhos:** manter cada seção de palestrante (nome, data, horário, local, tema) coesa no mesmo chunk, evitando mistura de informações entre palestrantes diferentes e garantindo que cada atividade seja indexada como unidade independente.
 
 ---
 
@@ -177,25 +180,28 @@ iguassuinova/
 
 - `is_fonte_palestrante(fonte)`: retorna True se `source == "palestrantes.md"` ou começa com `"palestrante-perfil"`.
 
-- `buscar_palestras_por_mundo(mundo, chunks, metadados, limit=200)`:
-  - Busca chunks de palestrantes que mencionam o mundo e têm data/horário/local/bloco/espaço/sala.
+- `buscar_palestras_por_mundo(mundo, chunks, metadados)`:
+  - Busca TODOS os chunks de palestrantes que mencionam o mundo e têm data/horário/local/bloco/espaço/sala.
+  - Não aplicar limite artificial (ex: limit=8, limit=50, limit=200). Deve retornar todas as atividades encontradas.
   - Monta a atividade completa juntando chunks adjacentes do mesmo perfil de palestrante.
   - Para chunks seguintes, inclui linhas que começam com `### ` (tema da atividade) mas para em `## Nome` (próximo palestrante).
-  - Retorna lista de dicionários com `score`, `chunk`, `source`, `title`.
+  - Retorna lista de dicionários com `score`, `chunk`, `source`, `title`, um item por atividade encontrada.
 
 - `format_answer(resultados, listagem_palestras=False, html=False)`:
   - Formata resposta a partir dos chunks.
-  - Se `listagem_palestras=True`, chama `_formatar_lista_palestras(resultados, html=html)`.
+  - Se `listagem_palestras=True`, chama `_formatar_lista_palestras(resultados, html=html)` com TODOS os resultados recebidos.
   - Ordem de prioridade: palestrantes > mundos > faq > outros.
   - Para perguntas sobre pessoa específica, prioriza o chunk que menciona o nome.
   - Limpa imagens, links, quebras de linha excessivas.
 
 - `_formatar_lista_palestras(resultados, html=False)`:
   - Formata listagem de palestras por mundo.
-  - Extrai: nome do palestrante, data (`**DD/MM/AAAA**`), horário (`**HH:MM** – **HH:MM**`), local (inclui mundo), tema (linha `### `).
+  - Processa TODOS os resultados recebidos, sem parar no primeiro nem limitar a quantidade.
+  - Para cada resultado, extrai: nome do palestrante, data (`**DD/MM/AAAA**`), horário (`**HH:MM** – **HH:MM**`), local (inclui mundo), tema (linha `### `).
   - Monta linha: `**Nome** | DD/MM/AAAA | HH:MM – HH:MM | Local · Mundo X | — Tema`.
   - Se `html=True`, usa `<bold>Nome</bold>`; se `html=False`, usa ANSI `\033[1mNome\033[0m`.
   - Eventos separados por `\n\n`.
+  - Se não houver nenhum resultado, retorna mensagem informando que não há atividades cadastradas para aquele mundo.
 
 - `ollama_chat(model, mensagens)`:
   - Consulta `http://localhost:11434/api/chat` (POST).
@@ -256,9 +262,12 @@ Use `--modelo nenhum` para desativar o LLM local.
 **`rag_answer(question)`:**
 - Recupera chunks via `retrieve()` (top_k=5).
 - Aplica regras de prioridade por palavra-chave.
-- Se pergunta menciona palestra(s) + mundo, busca palestras daquele mundo e coloca no topo.
-- Se `listagem_palestras=True`, pula o LLM e retorna diretamente o formato estruturado.
+- Se pergunta menciona palestra(s) + mundo, busca TODAS as palestras daquele mundo via `buscar_palestras_por_mundo()` e coloca no topo dos resultados, antes dos outros chunks.
+- Une os resultados da busca direta com os resultados do retrieve, sem descartar atividades duplicadas (usa o conteúdo do chunk como chave de deduplicação).
+- Se houver resultados de palestras por mundo (`listagem_palestras=True`), pula o LLM e retorna diretamente o formato estruturado com TODAS as atividades encontradas.
 - Caso contrário, usa Ollama com SYSTEM_PROMPT + RAG_PROMPT, com fallback para chunks brutos se falhar.
+
+**Requisito de exaustividade:** Quando a pergunta é sobre palestras de um mundo específico, o sistema deve retornar TODAS as atividades cadastradas para esse mundo no conteúdo offline, não apenas um subconjunto. Não aplicar limite de quantidade de resultados na listagem.
 
 **Regras de prioridade na busca:**
 
@@ -420,7 +429,8 @@ python3 app.py --modelo gemma3:4b
 1. `python3 chatbot/ingest.py` cria o índice em `chatbot/index/` com vetores, chunks e metadados.
 2. `python3 chatbot/chatbot.py` roda no terminal, permite escolher Ollama/Groq e responde perguntas sobre o festival.
 3. `python3 web/app.py --modelo gemma3:4b` sobe o servidor Flask em `http://localhost:5000`.
-4. Pergunta "Quais são as palestras do mundo Itaipu Parquetec?" retorna múltiplas palestras (incluindo Cesar Brod e Felipe Gonzalez) com nome, data, horário, local e tema.
+4. Pergunta "Quais são as palestras do mundo Itaipu Parquetec?" retorna TODAS as atividades cadastradas para esse mundo (incluindo Cesar Brod, Felipe Gonzalez, Gustavo Possetti e todos os demais) com nome, data, horário, local e tema. Não pode haver perda de atividades.
 5. Nomes de palestrantes aparecem em negrito (ANSI no CLI, `<strong>` na web).
 6. Cada evento aparece em linha separada.
 7. O card "Modelo de linguagem (local)" na web mostra se o Ollama está online e qual modelo está ativo.
+8. O número de resultados retornados para "palestras do mundo Itaipu Parquetec" deve ser igual ao número de atividades cadastradas nos arquivos offline para esse mundo (sem truncamento artificial).
