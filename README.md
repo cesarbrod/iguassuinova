@@ -2,6 +2,12 @@
 
 Projeto educacional de chatbot RAG (Retrieval-Augmented Generation) que responde perguntas sobre o Festival Iguassu Inova 2026 usando conteúdo 100% offline do site oficial (https://festivaliguassuinova.com.br/).
 
+## Documentação relacionada
+
+- [`tutorial.md`](tutorial.md) — Guia detalhado de instalação, detalhamento de cada programa, razão das escolhas técnicas e explicação de TF-IDF em linguagem simples.
+- [`specs.md`](specs.md) — Especificações completas para reproduzir (vibecode) este projeto em outra máquina Linux, incluindo ações necessárias do usuário, estrutura de pastas, prompts do sistema e critérios de aceite.
+- [`web/README.md`](web/README.md) — Documentação específica da versão web (Flask + HTML/CSS/JS).
+
 ## Aviso sobre o caráter educacional
 
 Este projeto foi desenvolvido com fins **estritamente educacionais**. O objetivo é demonstrar como construir um sistema RAG (Retrieval-Augmented Generation) simples usando:
@@ -107,61 +113,64 @@ Certifique-se de ter o Python 3 instalado:
 python3 --version
 ```
 
+Recomenda-se usar um ambiente virtual:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
 Instale as dependências Python necessárias:
 
 ```bash
-pip3 install --break-system-packages groq numpy scikit-learn
+pip install groq numpy scikit-learn requests beautifulsoup4 html2text flask
 ```
 
-### 2. Atualizar o conteúdo offline do site (opcional)
+> Em sistemas onde o gerenciador de pacotes impede instalação global (ex: Ubuntu/Debian recentes), use `pip install --break-system-packages ...` ou mantenha o venv ativado.
 
-Se desejar atualizar o conteúdo capturado do site https://festivaliguassuinova.com.br/, siga estes passos:
+### 2. (Opcional) Instalar o Ollama para modelo local
 
-#### 2.1. Capturar páginas do site
-
-Use uma ferramenta de captura de páginas (como `webfetch`, `curl` ou `wget`) para baixar as páginas relevantes:
+Para usar o LLM local totalmente offline:
 
 ```bash
-# Exemplo de páginas a serem capturadas:
-# https://festivaliguassuinova.com.br/
-# https://festivaliguassuinova.com.br/faq.html
-# https://festivaliguassuinova.com.br/palestrantes.html
-# https://festivaliguassuinova.com.br/o-festival-e-seu.html
-# https://festivaliguassuinova.com.br/ficiencias.html
-# https://festivaliguassuinova.com.br/itaipu-parquetec.html
-# https://festivaliguassuinova.com.br/sapiens.html
-# https://festivaliguassuinova.com.br/summit-tour.html
-# https://festivaliguassuinova.com.br/fims.html
-# https://festivaliguassuinova.com.br/rme.html
-# https://festivaliguassuinova.com.br/termos-de-uso.html
-# https://festivaliguassuinova.com.br/politica-de-cookies.html
-# https://festivaliguassuinova.com.br/termos-de-participacao.html
+curl -fsSL https://ollama.com/install.sh | sh
+ollama serve &
+ollama pull gemma3:4b
+# ou: ollama pull phi3:mini
 ```
 
-Salve cada página capturada como arquivo `.md` (markdown) dentro da pasta `offline-content/`, mantendo a nomenclatura descritiva.
+> ⚠️ Evite o modelo `qwen3.5:4b`: possui modo "thinking" integrado que não pode ser desabilitado via API do Ollama, deixando a resposta vazia em RAG.
 
-#### 2.2. Adicionar páginas de perfis individuais de palestrantes
-
-O site de palestrantes (`https://festivaliguassuinova.com.br/palestrantes.html`) contém links individuais para cada palestrante no formato:
-
-```
-https://festivaliguassuinova.com.br/palestrantes/?lel_yazo_profile=NNN
-```
-
-Para adicionar informações detalhadas de um palestrante específico (ex: Cesar Brod, perfil 225), acesse a URL correspondente e salve o conteúdo em `offline-content/palestrantes.md` ou em um arquivo dedicado.
-
-#### 2.3. Recriar o índice de busca
-
-Após atualizar ou adicionar arquivos em `offline-content/`, recria o índice TF-IDF:
+### 3. (Opcional) Configurar a chave da Groq (nuvem)
 
 ```bash
-cd /home/brod/scripts/opencode/iguassuinova/chatbot
-python3 ingest.py
+export GROQ_API_KEY=sua_chave_aqui
 ```
-
-Isso gerará os arquivos em `index/` (vectors.npy, chunks.json, metadados.json, vectorizer.json) usados pelo chatbot para busca por similaridade.
 
 ---
+
+### 4. Capturar ou reindexar o conteúdo offline
+
+O conteúdo já está incluído no repositório em `offline-content/`, mas você pode atualizá-lo a qualquer momento com o scraper automático:
+
+```bash
+# Captura apenas as páginas principais (rápido)
+python3 chatbot/scrape.py
+
+# Captura tudo, incluindo perfis individuais de palestrantes (demorado)
+python3 chatbot/scrape.py --all
+
+# Limita a captura de perfis (ex: 50)
+python3 chatbot/scrape.py --all --limite 50
+
+# Apenas reindexa os arquivos já existentes (sem baixar nada)
+python3 chatbot/scrape.py --so-reindexar
+```
+
+O scraper baixa páginas do site oficial, converte HTML para Markdown e recria o índice TF-IDF automaticamente.
+
+---
+
 
 ## Versão web (servidor local)
 
@@ -185,7 +194,7 @@ Acesse: http://localhost:5000
 - Word wrapping automático
 - Busca baseada em conteúdo offline (sem depender de modelo LLM externo)
 
-Para detalhes completos da versão web (instalação, escolha de modelo, rotas da API e interface), consulte [`web/README.md`](web/README.md).
+Para detalhes completos da versão web (instalação, escolha de modelo, rotas da API e interface), consulte [`web/README.md`](web/README.md) e [`specs.md`](specs.md).
 
 ---
 
@@ -287,6 +296,13 @@ O chatbot inclui as seguintes melhorias de exibição no terminal:
 - "Quais recursos de acessibilidade estarão disponíveis?"
 
 Digite `sair`, `exit` ou `quit` para encerrar o chatbot.
+
+---
+
+## Documentação detalhada
+
+- [`tutorial.md`](tutorial.md): guia completo de instalação, detalhamento de cada programa (`ingest.py`, `scrape.py`, `chatbot.py`, `app.py`, `app.js`), razão das escolhas técnicas e explicação de TF-IDF em linguagem simples.
+- [`specs.md`](specs.md): especificações para reproduzir (vibecode) o projeto em outra máquina Linux, incluindo ações do usuário, estrutura de pastas, prompts do sistema, mapeamento de mundos, regras de prioridade na busca e critérios de aceite.
 
 ---
 
