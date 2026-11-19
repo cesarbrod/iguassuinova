@@ -717,23 +717,31 @@ def main():
 
         contexto = format_context(resultados)
 
-        mensagens = [{"role": "system", "content": SYSTEM_PROMPT}]
-        mensagens.append(
-            {"role": "user", "content": RAG_PROMPT.format(context=contexto, question=pergunta)}
-        )
-
-        if use_local:
-            texto = ollama_chat(local_model, mensagens)
-        else:
-            texto = groq_chat(groq_client, mensagens)
-
-        if not texto:
-            texto = (
-                "Desculpe, o modelo selecionado não conseguiu gerar uma resposta "
-                "para esta pergunta. Tente outro modelo (ex: phi3:mini) ou o backend Groq."
+        # Usa LLM apenas se não for listagem de palestras por mundo.
+        # Nesses casos, os dados já estão estruturados e não vale a pena
+        # enviar 200+ itens para o LLM (ele geraria fragmentos).
+        if not listagem_palestras:
+            mensagens = [{"role": "system", "content": SYSTEM_PROMPT}]
+            mensagens.append(
+                {"role": "user", "content": RAG_PROMPT.format(context=contexto, question=pergunta)}
             )
 
-        texto_limpo = clean_response(texto)
+            if use_local:
+                texto = ollama_chat(local_model, mensagens)
+            else:
+                texto = groq_chat(groq_client, mensagens)
+
+            if not texto:
+                texto = (
+                    "Desculpe, o modelo selecionado não conseguiu gerar uma resposta "
+                    "para esta pergunta. Tente outro modelo (ex: phi3:mini) ou o backend Groq."
+                )
+
+            texto_limpo = clean_response(texto)
+        else:
+            # Listagem de palestras: retorna direto o formato estruturado, sem LLM
+            texto_limpo = format_answer(resultados, listagem_palestras=True)
+
         texto_wrapped = wrap_text(texto_limpo)
         print(f"\n{BOLD}Bot:{RESET}")
         print_paginated(texto_wrapped)

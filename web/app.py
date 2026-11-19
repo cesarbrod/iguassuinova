@@ -178,8 +178,10 @@ def rag_answer(question: str) -> str:
 
     contexto = format_context(resultados)
 
-    # Usa LLM local via Ollama, se configurado e rodando
-    if _ollama_model and ollama_is_running():
+    # Usa LLM local via Ollama, se configurado e rodando.
+    # Na listagem de palestras por mundo, os dados já estão estruturados;
+    # não vale a pena enviar 200+ itens para o LLM (ele geraria fragmentos).
+    if not listagem_palestras and _ollama_model and ollama_is_running():
         mensagens = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": RAG_PROMPT.format(context=contexto, question=question)},
