@@ -43,6 +43,10 @@ Veja o arquivo [`LICENSE`](LICENSE) ou https://www.gnu.org/licenses/gpl-3.0.html
 ```
 iguassuinova/
 ├── README.md                      # Documentação principal (este arquivo)
+├── tutorial.md                    # Guia detalhado de instalação, programas e escolhas técnicas
+├── specs.md                       # Especificações para reproduzir (vibecode) em outra máquina
+├── LICENSE                        # Licença GPLv3+
+├── .gitignore                     # Ignora __pycache__, *.pyc, index/, .env
 ├── offline-content/          # Conteúdo offline do site (arquivos markdown)
 │   ├── index.md              # Página principal (datas, local, palestrantes, patrocinadores)
 │   ├── faq.md                # Perguntas frequentes (ingressos, credenciamento, acessibilidade, LGPD)
