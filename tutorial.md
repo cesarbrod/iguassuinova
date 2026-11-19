@@ -69,6 +69,20 @@ iguassuinova/
 
 **Por que TF-IDF:** É uma técnica leve, rápida, totalmente offline e não requer modelo de linguagem externo para indexar. É suficiente para busca por similaridade de palavras-chave sobre um conjunto limitado de documentos estáticos (cerca de 247 arquivos e 3.100+ chunks).
 
+#### O que é TF-IDF (em linguagem simples)
+
+TF-IDF significa **Term Frequency–Inverse Document Frequency** (Frequência do Termo – Frequência Inversa do Documento). Apesar do nome complicado, a ideia é bem simples:
+
+Imagine que você tem um monte de documentos (no nosso caso, os arquivos Markdown do festival) e quer encontrar quais deles são mais relevantes para uma pergunta. O TF-IDF faz isso dando uma "nota" a cada palavra de cada documento, considerando duas coisas:
+
+1. **TF (Frequência do Termo):** Quantas vezes a palavra aparece no documento. Se a palavra "Itaipu" aparece muitas vezes num documento, esse documento provavelmente fala sobre Itaipu.
+
+2. **IDF (Frequência Inversa do Documento):** Quão rara é a palavra em todos os documentos. Palavras que aparecem em quase todos os documentos (como "o", "a", "e", "de", "festival") não ajudam a diferenciar um documento do outro, então recebem pouca nota. Palavras raras e específicas (como "Itaipu Parquetec", "FICiências", "Cesar Brod") recebem muita nota, porque são bons indicadores do assunto.
+
+A nota final (TF-IDF) é alta quando uma palavra aparece **muitas vezes em um documento específico** e **pouco nos outros documentos**. Assim, quando você faz uma pergunta, o sistema compara as palavras da pergunta com as notas de cada documento e retorna aqueles com a maior pontuação — ou seja, os que provavelmente têm a resposta.
+
+No projeto, cada trecho (chunk) de texto recebe um vetor de notas TF-IDF. A pergunta do usuário também é convertida num vetor do mesmo jeito. O sistema então calcula a similaridade entre o vetor da pergunta e os vetores dos trechos, devolvendo os trechos mais parecidos.
+
 **Chunking consciente de seções:** O `ingest.py` divide o texto por cabeçalhos markdown (#, ##, ###) para manter cada seção de palestrante (nome, data, horário, local, tema) coesa no mesmo chunk, evitando que informação de um palestrante se misture com outro.
 
 ### 3.2 `chatbot/scrape.py` — Captura automática do conteúdo offline
