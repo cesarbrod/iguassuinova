@@ -5,7 +5,7 @@ Projeto educacional de chatbot RAG (Retrieval-Augmented Generation) que responde
 ## Documentação relacionada
 
 - [`tutorial.md`](tutorial.md) — Guia detalhado de instalação, detalhamento de cada programa, razão das escolhas técnicas e explicação de TF-IDF em linguagem simples.
-- [`specs.md`](specs.md) — Especificações completas para reproduzir (vibecode) este projeto em outra máquina Linux, incluindo ações necessárias do usuário, estrutura de pastas, prompts do sistema e critérios de aceite.
+- [`specs.md`](specs.md) — Especificações completas para reproduzir (vibecode) este projeto em outra máquina Linux, incluindo ações necessárias do usuário, estrutura de pastas, prompts do sistema e critérios de aceite. No opencode, com o modelo Nemotron 3.5 Super VL Free, use o prompt "Leia as instruções em specs.ms e crie o sistema conforme as especififações." Caso teste com outras ferramentas de vibecode e modelos, fale sobre seus resultados.
 - [`web/README.md`](web/README.md) — Documentação específica da versão web (Flask + HTML/CSS/JS).
 
 ## Aviso sobre o caráter educacional
