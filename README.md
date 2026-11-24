@@ -303,6 +303,28 @@ Digite `sair`, `exit` ou `quit` para encerrar o chatbot.
 
 ---
 
+## Screenshots
+
+### Versão CLI
+
+| Tela | Imagem |
+|------|--------|
+| Escolha do backend de LLM | ![CLI - escolha do backend](screenshots/cli1.png) |
+| Iniciando servidor Ollama e modelos locais | ![CLI - servidor Ollama](screenshots/cli2.png) |
+| Uso do modelo local com pergunta e resposta | ![CLI - resposta do bot](screenshots/cli3.png) |
+| Resposta com palestras do Mundo Itaipu Parquetec | ![CLI - palestrantes](screenshots/cli4.png) |
+
+### Versão web
+
+| Tela | Imagem |
+|------|--------|
+| Página inicial do chatbot | ![Web - página inicial](screenshots/web1.png) |
+| Sobre o evento e boas-vindas do assistente | ![Web - sobre o evento](screenshots/web2.png) |
+| Conversa com o assistente (IA) | ![Web - conversa IA](screenshots/web3.png) |
+| Conversa com o assistente (palestra Cesar Brod) | ![Web - palestra Cesar Brod](screenshots/web4.png) |
+
+---
+
 ## Documentação detalhada
 
 - [`tutorial.md`](tutorial.md): guia completo de instalação, detalhamento de cada programa (`ingest.py`, `scrape.py`, `chatbot.py`, `app.py`, `app.js`), razão das escolhas técnicas e explicação de TF-IDF em linguagem simples.

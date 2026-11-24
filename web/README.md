@@ -60,6 +60,15 @@ Na barra lateral do chat há um card "Modelo de linguagem (local)" que mostra:
 
 Você pode trocar o modelo a qualquer momento pelo select na interface, sem reiniciar o servidor. Se escolher "Nenhum", as respostas serão geradas diretamente a partir dos conteúdos offline (busca TF-IDF), sem usar LLM.
 
+### Screenshots
+
+| Tela | Imagem |
+|------|--------|
+| Página inicial do chatbot | ![Web - página inicial](../screenshots/web1.png) |
+| Sobre o evento e boas-vindas do assistente | ![Web - sobre o evento](../screenshots/web2.png) |
+| Conversa com o assistente (IA) | ![Web - conversa IA](../screenshots/web3.png) |
+| Conversa com o assistente (palestra Cesar Brod) | ![Web - palestra Cesar Brod](../screenshots/web4.png) |
+
 ## Estrutura da versão web
 
 ```
