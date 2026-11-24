@@ -47,6 +47,15 @@ iguassuinova/
 ├── specs.md                       # Especificações para reproduzir (vibecode) em outra máquina
 ├── LICENSE                        # Licença GPLv3+
 ├── .gitignore                     # Ignora __pycache__, *.pyc, index/, .env
+├── screenshots/            # Capturas de tela das versões CLI e web
+│   ├── cli1.png            # CLI: escolha do backend de LLM
+│   ├── cli2.png            # CLI: servidor Ollama e modelos locais
+│   ├── cli3.png            # CLI: resposta do bot (palestra Cesar Brod)
+│   ├── cli4.png            # CLI: palestrantes do Mundo Itaipu Parquetec
+│   ├── web1.png            # Web: página inicial
+│   ├── web2.png            # Web: sobre o evento e boas-vindas
+│   ├── web3.png            # Web: conversa com o assistente (IA)
+│   └── web4.png            # Web: conversa com o assistente (palestra Cesar Brod)
 ├── offline-content/          # Conteúdo offline do site (arquivos markdown)
 │   ├── index.md              # Página principal (datas, local, palestrantes, patrocinadores)
 │   ├── faq.md                # Perguntas frequentes (ingressos, credenciamento, acessibilidade, LGPD)
